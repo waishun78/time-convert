@@ -12,6 +12,10 @@ struct MenuBarView: View {
                 Divider()
             }
 
+            QuickTimesSection()
+
+            Divider()
+
             ManualInputSection()
 
             Divider()
@@ -27,6 +31,8 @@ struct MenuBarView: View {
             .padding(.vertical, 8)
         }
         .frame(width: 280)
+        .onAppear { monitor.isMenuOpen = true }
+        .onDisappear { monitor.isMenuOpen = false }
     }
 }
 
@@ -166,6 +172,81 @@ private struct ResultRow: View {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     copied = false
                 }
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.mini)
+            .tint(copied ? .green : .accentColor)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+}
+
+// MARK: - Quick Times Section
+
+private struct QuickTimesSection: View {
+    @State private var now = Date()
+    private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
+    private var presets: [(label: String, date: Date)] {
+        [
+            ("Now",  now),
+            ("+1h",  now.addingTimeInterval(3_600)),
+            ("+7d",  now.addingTimeInterval(7 * 86_400)),
+        ]
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Text("Quick Epochs")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .textCase(.uppercase)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12)
+                .padding(.top, 10)
+                .padding(.bottom, 4)
+
+            ForEach(Array(presets.enumerated()), id: \.offset) { index, preset in
+                if index > 0 { Divider().padding(.leading, 36) }
+                QuickRow(label: preset.label, date: preset.date)
+            }
+        }
+        .onReceive(ticker) { now = $0 }
+    }
+}
+
+private struct QuickRow: View {
+    let label: String
+    let date: Date
+    @State private var copied = false
+
+    private var epoch: Int64 { Int64(date.timeIntervalSince1970) }
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "clock.arrow.trianglehead.counterclockwise.rotate.90")
+                .foregroundStyle(.secondary)
+                .imageScale(.small)
+                .frame(width: 16)
+
+            VStack(alignment: .leading, spacing: 1) {
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .textCase(.uppercase)
+                Text("\(epoch)")
+                    .font(.system(.callout, design: .monospaced))
+                    .foregroundStyle(.primary)
+            }
+
+            Spacer()
+
+            Button(copied ? "Copied" : "Copy") {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString("\(epoch)", forType: .string)
+                copied = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { copied = false }
             }
             .buttonStyle(.bordered)
             .controlSize(.mini)

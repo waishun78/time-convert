@@ -5,6 +5,8 @@ final class ClipboardMonitor: ObservableObject {
     @Published var menuBarLabel = ""
     @Published var inputText = ""
 
+    var isMenuOpen = false
+
     private var pollTimer: Timer?
     private var resetTimer: Timer?
     private var lastChangeCount: Int
@@ -43,11 +45,21 @@ final class ClipboardMonitor: ObservableObject {
 
     private func scheduleReset() {
         resetTimer?.invalidate()
-        resetTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: false) { [weak self] _ in
-            self?.result = nil
-            self?.menuBarLabel = ""
-            self?.inputText = ""
+        resetTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: false) { [weak self] _ in
+            self?.tryReset()
         }
+    }
+
+    private func tryReset() {
+        guard !isMenuOpen else {
+            resetTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { [weak self] _ in
+                self?.tryReset()
+            }
+            return
+        }
+        result = nil
+        menuBarLabel = ""
+        inputText = ""
     }
 
     deinit {
