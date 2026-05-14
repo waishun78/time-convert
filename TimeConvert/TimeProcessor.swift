@@ -32,7 +32,7 @@ enum TimeProcessor {
 
     static let timeFormatter: DateFormatter = {
         let f = DateFormatter()
-        f.dateFormat = "ddMMMyy"
+        f.dateFormat = "ddMMMyy HH:mm:ss"
         f.locale = Locale(identifier: "en_US_POSIX")
         f.timeZone = .current
         return f
