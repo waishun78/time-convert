@@ -58,13 +58,13 @@ enum TimeProcessor {
         let s = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let len = s.count
 
-        // Fast path: epoch (10 = seconds, 13 = milliseconds)
-        if len == 10 || len == 13 {
-            if s.allSatisfy(\.isNumber), let value = Double(s) {
-                let secs = len == 13 ? value / 1000.0 : value
+        // Fast path: epoch (10 = seconds, 12-13 = milliseconds, including older values like 691776000000)
+        if s.allSatisfy(\.isNumber), let value = Double(s) {
+            if len == 10 || len == 12 || len == 13 {
+                let secs = len >= 12 ? value / 1000.0 : value
                 let date = Date(timeIntervalSince1970: secs)
                 let year = Calendar.current.component(.year, from: date)
-                if (2000...2100).contains(year) {
+                if (1970...2100).contains(year) {
                     return .epochToTime(date)
                 }
             }
